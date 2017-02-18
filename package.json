@@ -1,0 +1,29 @@
+{
+  "name": "canvas-syncing-assignment-part3",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "node ./src/server.js",
+    "pretest": "eslint ./src --fix",
+    "test": "echo \"Tests complete\""
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/garrison-rit/canvas-syncing-assignment-part3.git"
+  },
+  "author": "Garrison Davis",
+  "license": "UNLICENSED",
+  "bugs": {
+    "url": "https://github.com/garrison-rit/canvas-syncing-assignment-part3/issues"
+  },
+  "homepage": "https://github.com/garrison-rit/canvas-syncing-assignment-part3#readme",
+  "devDependencies": {
+    "eslint": "^3.15.0",
+    "eslint-config-airbnb": "^14.1.0",
+    "eslint-plugin-import": "^2.2.0"
+  },
+  "dependencies": {
+    "socket.io": "^1.7.3"
+  }
+}
