@@ -14,74 +14,75 @@
         let origin = {} ;
         let socket;
         let dragging = false;
+        let myId = -1;
 
-    //drawing stuffs, based on my 330 drawing submission
-
-    function constructShape(mouse)
-    {
-        return {
-            x : Math.min(mouse.x,origin.x),
-            y : Math.min(mouse.y,origin.y),
-            width : Math.abs(mouse.x-origin.x),
-            height : Math.abs(mouse.y-origin.y)
-        };
-    }
-
-	// Function Name: getMouse()
-	// returns mouse position in local coordinate system of element
-	// Author: Tony Jefferson
-	// Last update: 3/1/2014
-	function getMouse(e){
-		var mouse = {}
-		mouse.x = e.pageX - e.target.offsetLeft;
-		mouse.y = e.pageY - e.target.offsetTop;
-		return mouse;
-	}
-
-	function doMousedown(e){
-        dragging=true;
-        let mouse=getMouse(e);
-        origin.x = mouse.x;
-        origin.y = mouse.y;
-	}
-
- 	function doMousemove(e) {	
-        //bail out if the mouse button is not down
-        if(!dragging)return;
-        
-        //get location of mouse in canvas coordinates
-        var mouse=getMouse(e);
-        
-         /*These adjustments keep the rectangle tool working even if the user drags from right to left. Recall that canvas will draw a rectangle left to right with the ctx.fillRect() and ctx.strokeRect() methods*/
-        let shape = constructShape(mouse);
-        
-        //fillandstroketherectangle
-        topCtx.clear();
-        topCtx.fillRect(shape.x,shape.y,shape.width,shape.height);
-	}
-	
-	function doMouseup(e) {
-        topCtx.clear();
-        
-        socket.emit("draw", {shape:constructShape(
-        getMouse(e))});
-        
-        dragging = false;
-	}
-	
-	// if the user drags out of the canvas
-	function doMouseout(e) {
-        dragging = false;
-        topCtx.clear();
-        //ctx.closePath();
-	}
-
+        //drawing stuffs, based on my 330 drawing submission
+    
+        function constructShape(mouse)
+        {
+            return {
+                x : Math.min(mouse.x,origin.x),
+                y : Math.min(mouse.y,origin.y),
+                width : Math.abs(mouse.x-origin.x),
+                height : Math.abs(mouse.y-origin.y)
+            };
+        }
+    
+    	// Function Name: getMouse()
+    	// returns mouse position in local coordinate system of element
+    	// Author: Tony Jefferson
+    	// Last update: 3/1/2014
+    	function getMouse(e){
+    		var mouse = {}
+    		mouse.x = e.pageX - e.target.offsetLeft;
+    		mouse.y = e.pageY - e.target.offsetTop;
+    		return mouse;
+    	}
+    
+    	function doMousedown(e){
+            dragging=true;
+            let mouse=getMouse(e);
+            origin.x = mouse.x;
+            origin.y = mouse.y;
+    	}
+    
+     	function doMousemove(e) {	
+            //bail out if the mouse button is not down
+            if(!dragging)return;
+            
+            //get location of mouse in canvas coordinates
+            var mouse=getMouse(e);
+            
+             /*These adjustments keep the rectangle tool working even if the user drags from right to left. Recall that canvas will draw a rectangle left to right with the ctx.fillRect() and ctx.strokeRect() methods*/
+            let shape = constructShape(mouse);
+            
+            //fillandstroketherectangle
+            topCtx.clear();
+            topCtx.fillRect(shape.x,shape.y,shape.width,shape.height);
+    	}
+    	
+    	function doMouseup(e) {
+            topCtx.clear();
+            
+            socket.emit("draw", {shape:constructShape(
+            getMouse(e))});
+            
+            dragging = false;
+    	}
+    	
+    	// if the user drags out of the canvas
+    	function doMouseout(e) {
+            dragging = false;
+            topCtx.clear();
+            //ctx.closePath();
+    	}
+    
         //Setup
         const setupSocket = (socket) => {
-            socket.on('draw', (data)=>{
-                console.log(data);
-                console.log(draws);
-                recieveDraw(data);
+            
+            socket.on('setId', (data)=>{
+                console.log("got id:"+data.id);
+                myId = data.id;
             });
             
             socket.on('syncCanvas',(data)=>{
@@ -95,7 +96,7 @@
         
         const draw = (shape) =>
         {
-            if(shape.ours===false)
+            if(shape.owner!==myId)
             {
                 //then its local 
                 ctx.fillStyle = "red";
@@ -106,7 +107,7 @@
             
             ctx.fillRect(shape.x, shape.y, shape.width, shape.height);
         }
-        
+        /*
         const recieveDraw = (data) =>
         {
             if(lastDraw>data.when)//oopsie
@@ -122,7 +123,7 @@
             draw(data.shape);
             
             lastDraw = data.when;
-        }
+        }*/
         
         const redraw = () =>
         {
@@ -135,7 +136,7 @@
             drawsList = [];
             
             Object.keys(draws).forEach((itm)=>{
-                drawsList.push({when: itm, shape: draws[itm]});
+                drawsList.push({when: draws[itm].when, shape: draws[itm].shape});
             });
             
             if(drawsList.length==0)
@@ -145,7 +146,7 @@
             }
             
             drawsList.sort(function(a,b){
-                return a-b;
+                return a.when-b.when;
             });
             
             console.log(drawsList);

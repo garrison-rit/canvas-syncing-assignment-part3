@@ -21,35 +21,63 @@ console.log(`listening on 127.0.0.1: ${port}`);
 const io = socketio(app);
 
 const draws = {};
+const users = {};
+const freeIds = [];
 
-const onJoin = (socket) => {
-  socket.join('room1');
+const syncCanvas = (socket) => {
   socket.emit('syncCanvas', { draws });
 };
 
-const onDraw = (socket) => {
+const getNextID = () => {
+  if (freeIds.length !== 0) {
+    return freeIds.pop();
+  }
+  return Object.keys(users).length;
+};
+
+const onJoin = (sock) => {
+  const socket = sock;
+
+  socket.uid = getNextID();
+  users[socket.uid] = undefined;// undefined cuz unused//socket;
+  socket.join('room1');
+
+  socket.emit('setId', { id: socket.uid });
+  syncCanvas(socket);
+};
+
+const onDraw = (sock) => {
+  const socket = sock;
   socket.on('draw', (data) => {
     const time = new Date().getTime();
-    draws[time] = data.shape;
 
-    const response = {
+    const drawObj = {
       when: time,
       shape: data.shape,
     };
 
-    socket.emit('draw', response);
+    drawObj.shape.owner = socket.uid;
 
-    response.shape.ours = false;
+    draws[socket.uid] = drawObj;
 
-    socket.broadcast.to('room1').emit('draw', response);
+    syncCanvas(io.to('room1'));
   });
 };
+const onDisconnect = (socket) => {
+  socket.on('disconnect', () => {
+    delete users[socket.uid];
+    delete draws[socket.uid];
+    freeIds.push(socket.uid);
 
+    syncCanvas(io.to('room1'));
+  });
+};
 
 io.sockets.on('connection', (socket) => {
   console.log('started');
   onJoin(socket);
   onDraw(socket);
+  onDisconnect(socket);
       /*
     onJoined(socket);
     onMsg(socket);
